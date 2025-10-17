@@ -16,6 +16,7 @@ pd.set_option('display.max_columns', None)
 
 
 class AMLtoGraph(InMemoryDataset):
+    # คลาสนี้แปลงข้อมูลธุรกรรมให้เป็นกราฟพร้อมคุณสมบัติของโหนดและเส้นเชื่อม
 
     def __init__(self, root: str, edge_window_size: int = 10,
                  transform: Optional[Callable] = None,
@@ -26,7 +27,7 @@ class AMLtoGraph(InMemoryDataset):
 
     @property
     def raw_file_names(self) -> str:
-        return 'LI-Small_Trans.csv'
+        return 'HI-Small_Trans.csv'
 
     @property
     def processed_file_names(self) -> str:
@@ -37,6 +38,7 @@ class AMLtoGraph(InMemoryDataset):
         return self._data.edge_index.max().item() + 1
 
     def df_label_encoder(self, df, columns):
+        # เข้ารหัสคอลัมน์เชิงหมวดหมู่ให้กลายเป็นตัวเลขสำหรับใช้งานกับโมเดล
         le = preprocessing.LabelEncoder()
         for i in columns:
             df[i] = le.fit_transform(df[i].astype(str))
@@ -44,6 +46,7 @@ class AMLtoGraph(InMemoryDataset):
 
 
     def preprocess(self, df):
+        # ทำความสะอาดและแปลงข้อมูลเบื้องต้น เช่น การเข้ารหัส การปรับค่าเวลา และรวมบัญชี
         df = self.df_label_encoder(df,['Payment Format', 'Payment Currency', 'Receiving Currency'])
         df['Timestamp'] = pd.to_datetime(df['Timestamp'])
         df['Timestamp'] = df['Timestamp'].apply(lambda x: x.value)
@@ -60,6 +63,7 @@ class AMLtoGraph(InMemoryDataset):
         return df, receiving_df, paying_df, currency_ls
 
     def get_all_account(self, df):
+        # รวมข้อมูลบัญชีผู้โอนและผู้รับ พร้อมจัดเก็บสถานะต้องสงสัยไว้ในตารางเดียว
         ldf = df[['Account', 'From Bank']]
         rdf = df[['Account.1', 'To Bank']]
         suspicious = df[df['Is Laundering']==1]
@@ -81,12 +85,14 @@ class AMLtoGraph(InMemoryDataset):
         return df
     
     def paid_currency_aggregate(self, currency_ls, paying_df, accounts):
+        # คำนวณค่าเฉลี่ยจำนวนเงินที่จ่ายแยกตามสกุลเงินสำหรับแต่ละบัญชี
         for i in currency_ls:
             temp = paying_df[paying_df['Payment Currency'] == i]
             accounts['avg paid '+str(i)] = temp['Amount Paid'].groupby(temp['Account']).transform('mean')
         return accounts
 
     def received_currency_aggregate(self, currency_ls, receiving_df, accounts):
+        # คำนวณค่าเฉลี่ยจำนวนเงินที่ได้รับแยกตามสกุลเงินสำหรับแต่ละบัญชี
         for i in currency_ls:
             temp = receiving_df[receiving_df['Receiving Currency'] == i]
             accounts['avg received '+str(i)] = temp['Amount Received'].groupby(temp['Account']).transform('mean')
@@ -94,6 +100,7 @@ class AMLtoGraph(InMemoryDataset):
         return accounts
 
     def get_edge_df(self, accounts, df):
+        # สร้างข้อมูลขอบกราฟจากการจับคู่บัญชีผู้โอนและผู้รับ พร้อมคุณสมบัติของขอบ
         accounts = accounts.reset_index(drop=True)
         accounts['ID'] = accounts.index
         mapping_dict = dict(zip(accounts['Account'], accounts['ID']))
@@ -109,6 +116,7 @@ class AMLtoGraph(InMemoryDataset):
         return edge_attr, edge_index
 
     def get_node_attr(self, currency_ls, paying_df,receiving_df, accounts):
+        # รวมคุณสมบัติของโหนดและป้ายกำกับการฟอกเงินของแต่ละบัญชี
         node_df = self.paid_currency_aggregate(currency_ls, paying_df, accounts)
         node_df = self.received_currency_aggregate(currency_ls, receiving_df, node_df)
         node_label = torch.from_numpy(node_df['Is Laundering'].values).to(torch.float)
@@ -118,6 +126,7 @@ class AMLtoGraph(InMemoryDataset):
         return node_df, node_label
 
     def process(self):
+        # ขั้นตอนหลักในการโหลดและแปลงข้อมูลดิบให้พร้อมใช้งานในรูปแบบกราฟ
         df = pd.read_csv(self.raw_paths[0])
         df, receiving_df, paying_df, currency_ls = self.preprocess(df)
         accounts = self.get_all_account(df)

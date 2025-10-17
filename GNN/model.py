@@ -4,7 +4,9 @@ import torch.nn.functional as F
 import torch_geometric.transforms as T
 from torch_geometric.nn import GATConv, Linear
 
+
 class GAT(torch.nn.Module):
+    # โมเดลกราฟแบบ Graph Attention Network สำหรับจำแนกบัญชีน่าสงสัย
     def __init__(self, in_channels, hidden_channels, out_channels, heads):
         super().__init__()
         self.conv1 = GATConv(in_channels, hidden_channels, heads, dropout=0.6)
@@ -13,6 +15,7 @@ class GAT(torch.nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, edge_index, edge_attr):
+        # ขั้นตอน forward ประกอบด้วยดรอปเอาต์ เลเยอร์ GAT และส่งผ่านซิกมอยด์เพื่อได้ความน่าจะเป็น
         x = F.dropout(x, p=0.6, training=self.training)
         x = F.elu(self.conv1(x, edge_index, edge_attr))
         x = F.dropout(x, p=0.6, training=self.training)
