@@ -103,7 +103,9 @@ The GNN model demonstrated high accuracy but struggled with identifying the mino
 ##  Developer
 
 1.Jiraphat Sritawee			   StudentID	6610502005
+
 2.Napatsanan Damaporn		   StudentID	6610502102
+
 3.Jarukit  Phonwattananuwong	StudentID   6610505306
 
 
