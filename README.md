@@ -16,7 +16,8 @@ Anti-Money-Laundering-Datamining/
 ├── XGBoost/              # XGBoost model implementation and experiments
 ├── requirements.txt      # List of Python dependencies
 ├── .gitignore            # Git ignore file
-└── README.md             # Project documentation
+├── README.md             # Project documentation
+└── report.pdf            # Project report
 ```
 
 ### Key Objectives:
@@ -98,6 +99,12 @@ The GNN model demonstrated high accuracy but struggled with identifying the mino
 * **PyTorch Geometric:** Graph Neural Network implementation.
 * **Scikit-learn:** Preprocessing (SMOTE, LabelEncoder) and Metrics.
 * **Matplotlib / Seaborn:** Visualization.
+
+##  Developer
+
+1.Jiraphat Sritawee			   StudentID	6610502005
+2.Napatsanan Damaporn		   StudentID	6610502102
+3.Jarukit  Phonwattananuwong	StudentID   6610505306
 
 
 
